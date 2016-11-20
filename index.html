@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Match It!</title>
+		<link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet" type="text/css">
+		<link href="https://fonts.googleapis.com/css?family=Pacifico" rel="stylesheet" type="text/css">
+		<link href="css/style.css" type="text/css" rel="stylesheet" />
+	</head>
+	<body>
+
+		<div id="container-outer">
+			<div id="container-inner">
+			
+				<div class="column1of2">
+					<div id="container-board">
+						<p id="warningMsg">JavaScript is needed<br>to play this game.</p>
+						<div id="menu-grid">
+								<p id="gridsizeLabel">Select a Grid Size</p>
+								<div id="gridsizebutton-container">
+									<input type="submit" class="size" id="4x4" value="4 x 4" /
+									><input type="submit" class="size" id="6x6" value="6 x 6" />
+								</div>
+						</div>
+					</div>
+				</div>
+				
+				<!-- <div class="placeholder-v-5px"></div> -->
+				
+				<div class="column2of2">					
+					<div id="container-msgboard" class="column2of2">
+						<div id="msgboard-center">
+							<p id="msgboard"></p>			
+						</div>
+					</div>
+					
+					<div class="placeholder-h-5px"></div>
+					
+					<div id="container-control" class="column2of2">
+						<div class="placeholder-h-5px"></div>
+						<p id="controlLabel">Menu</p>
+						<!-- <div class="placeholder-h-5px"></div> -->
+						<div id="container-controlbutton">
+							<input type="submit" class="control" id="newGame" value="New Game" />
+							<input type="submit" class="control" id="solve" value="Solve" />
+							<input type="submit" class="control" id="restartGame" value="Restart" />
+							<input type="submit" class="control" id="hint" value="Hint" />
+						</div>
+						<div class="placeholder-h-5px"></div>
+						<div class="placeholder-h-5px"></div>
+					</div>
+
+					<div class="placeholder-h-5px"></div>
+					
+					<div id="container-speed" class="column2of2">
+						<div class="placeholder-h-5px"></div>
+						<p id="speedLabel">Flip Speed</p>
+						<div class="placeholder-h-5px"></div>
+						<div class="container-speedbutton">
+							<input type="submit" class="speed" id="slow" value="Slow" /
+							><input type="submit" class="speed selected" id="medium" value="Medium" /
+							><input type="submit" class="speed" id="fast" value="Fast" />
+						</div>
+						<div class="placeholder-h-5px"></div>
+						<div class="placeholder-h-5px"></div>
+					</div>
+					
+				</div>
+			</div>				
+		</div>
+		
+		<script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
+		<script type="text/javascript" src="js/game.js"></script>
+	</body>
+</html>
+
+
+
+
