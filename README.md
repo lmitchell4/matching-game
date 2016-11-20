@@ -1,9 +1,11 @@
 
 
-# Matching Game  <img align="bottom" src="https://github.com/lmitchell4/matching-game/blob/master/img/example_game.png" alt="Example game">
+# Matching Game
 
 This is a simple web-based matching game where the user clicks on tiles 
 with hidden images and tries to match up tiles with the same image.  
+
+<img align="bottom" src="https://github.com/lmitchell4/matching-game/blob/master/img/example_game.png" alt="Example game">
 
 
 # How to Play
