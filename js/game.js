@@ -4,11 +4,11 @@
 $('#warningMsg').remove();
 
 var Game = new (function() {
-	
+
 	var self = this,
 		uniqTileNames = ['a','b','c','one','two','three','four','bunny','cat',
-										 'circle','triangle','pentagon','hexagon',
-										 'hash','percent','star1','star2','tree'],
+                         'circle','triangle','pentagon','hexagon',
+                         'hash','percent','star1','star2','tree'],
 		size,
 		flipSpeed = 1000,
 		gridImages,			// Array holding the image name for each tile.
@@ -21,15 +21,16 @@ var Game = new (function() {
 		numUp = 0,					// Number of active (face up) tiles.
 		numOfMatches = 0,			// Total number of matched tiles.
 		numOfClicks = 0,			// Number of successful tile clicks;
-													// 	used to trigger a new message.
+                                    // 	used to trigger a new message.
+        gridCreated = false,
 		gameOver = false,
 		isWorking = false;			// Indicates if tileListener() method is executing. 
 	
 	var $boardcontainer = $('#container-board'),
-			$msgboard = $('p#msgboard'),	// Hold message board jQuery object.
-			$gridMenu = $('#menu-grid'),
-			$board,
-			$imgs;
+        $msgboard = $('p#msgboard'),	// Hold message board jQuery object.
+        $gridMenu = $('#menu-grid'),
+        $board,
+        $imgs;
 
 	var imgFolder = 'img/';
 	
@@ -75,8 +76,45 @@ var Game = new (function() {
 		
 		return ret;
 	}
-	
+
+	// Create the grid of tiles.
+	function createGrid() {
+		var tileID, str;
+		var imgString = imgFolder + "graysquare.png"
+		
+		if(size === 16) {
+			$board = $('<div id="board-4x4" class="column1of2"></div>');
+		} else if(size === 36) {
+			$board = $('<div id="board-6x6" class="column1of2"></div>');
+		}
+		$boardcontainer.append($board);
+		
+		for(var i = 0; i < size; i++) {
+			tileID = '"tile' + i + '"';
+			if(size === 16) {
+				str = '<div class="img_4x4">';
+			} else {
+				str = '<div class="img_6x6">';
+			}
+			str += '<img id=' + tileID + ' class="tile inplay" src=' + imgString + ' ';
+			str += 'alt=' + tileID + '>';
+			str += '</div>';
 			
+			$board.append(str);	
+		}
+
+		$imgs = $('img');
+		$imgs.on('click', function(e) {
+			tileListener(e);
+		});
+		
+		// Fade in a message on the message board.
+		$msgboard.stop(true, true);
+		$msgboard.hide().delay(700).fadeTo(700,1).text("Start Matching!");
+        
+        gridCreated = true;
+	};
+    
 	// Change the time before mismatches get returned to gray.
 	function changeSpeed(speed) {
 		if(speed === "slow") {
@@ -94,111 +132,110 @@ var Game = new (function() {
 		$imgs.eq(id).attr('src', imgString);
 		// $('img#tile' + id).attr('src', imgFolder + gridImages[id] + '.png');
 	};
-		
+
 	// Reset variables for either a new game or a restart.
-	function reset() {
+	function reset_vars() {
 		gameOver = false;
 		numOfClicks = 0;
 		isWorking = false;				
 		startNewTurn();					// start a new turn
 		numOfMatches = 0;				// reset the number of matches
 	}
-	
-	// Restart the current game.
-	function restart() {
-		// Clear the message board.
-		$msgboard.stop(true, true);
-		$msgboard.hide().text("");
-		
-		// Reset variables.
-		reset();
-		
-		if($imgs) {
-			$imgs.removeClass('matched');	// remove the 'matched' class from any/all tiles
-			$imgs.attr('inplay');			// reset tile class to 'inplay'
-			
-			// Change all tiles back to gray without reshuffling.
-			var imgString = imgFolder + 'graysquare.png';
-			$imgs.attr('src', imgString);		
-		}
-
-		// Fade in a message on the message board.
-		$msgboard.hide().delay(700).fadeTo(700,1).text("Start Matching!");		
-	};
 
 	// Start a new game.
 	function newgame() {
-		// Clear the message board.
-		$msgboard.stop(true, true);
-		$msgboard.hide().text("");
-			
-		// If a game already exists, run the code.  		
-		// Otherwise, do nothing. Wait for the user to finally pick a grid size.
-		if($board) {		
-			// Reset variables.
-			reset();
+        // Clear the message board.
+        $msgboard.stop(true, true);
+        $msgboard.hide().text("");
 
-			// Remove the current board.
-			$board.remove();
-			
-			// Kill the board selector.
-			// This will ensure this function does nothing if it is run multiple 
-			// times in a row.
-			$board = undefined;
-			
-			// Show the grid selection menu.
-			$boardcontainer.append($gridMenu);
+        // If a game already exists, run the code.
+        // Otherwise, do nothing. Wait for the user to finally pick a grid size.
+        if($board) {		
+            // Reset variables.
+            reset_vars();
 
-			// Resize the grid menu, if necessary.
-			SizeChange();
-			
-			// Generate the new game.
-			runGame();
-		}
-		
+            // Remove the current board.
+            $board.remove();
+            
+            // Kill the board selector.
+            // This will ensure this function does nothing if it is run multiple 
+            // times in a row.
+            $board = undefined;
+            
+            // Show the grid selection menu.
+            $boardcontainer.append($gridMenu);
+
+            // Resize the grid menu, if necessary.
+            SizeChange();
+            
+            // Generate the new game.
+            runGame();
+        }
 	};
 	
 	// Solve the current game.
 	function solve() {
-		gameOver = true;
-		
-		// Show all tiles.
-		for(var i = 0; i < size; i++) {
-			showOneTile(i);
-		}
-	
-		numOfMatches = 2*size;
-		$('img:not(.matched)').addClass('matched');		//attr('matched');		// set every tile class to 'matched'
-		
-		// If the message is still fading out after a match, this message can 
-		// accidentally fade, too, so first stop any current animations, then 
-		// undo the fade, then display the new message.
-		$msgboard.stop(true, true);
-		$msgboard.fadeTo(0,1).text('Solved!');
+        gameOver = true;
+        
+        // Show all tiles.
+        for(var i = 0; i < size; i++) {
+            showOneTile(i);
+        }
+    
+        numOfMatches = 2*size;
+        $('img:not(.matched)').addClass('matched');
+        
+        // If the message is still fading out after a match, this message can 
+        // accidentally fade, too, so first stop any current animations, then 
+        // undo the fade, then display the new message.
+        $msgboard.stop(true, true);
+        $msgboard.fadeTo(0,1).text('Solved!');
 	};
 	
-	// Give a hint.
-	function hint() {		
-		// If no tiles are currently selected, do nothing.			
-		
-		// If 1 tile is currently selected, find the other matching tile.
-		// if(activeOneID !== -1 && activeTwoID === -1) {
-		if(numUp === 1) {
-			var matchingID = matchArray[activeOneID];
-			
-			var $tile = $('img').eq(matchingID);
-			var imgString = imgFolder + 'hintsquare.png';
+	// Restart the current game.
+	function restart() {
+        // Clear the message board.
+        $msgboard.stop(true, true);
+        $msgboard.hide().text("");
+        
+        // Reset variables.
+        reset_vars();
+        
+        if($imgs) {
+            $imgs.removeClass('matched');	// remove the 'matched' class from any/all tiles
+            $imgs.attr('inplay');			// reset tile class to 'inplay'
+            
+            // Change all tiles back to gray without reshuffling.
+            var imgString = imgFolder + 'graysquare.png';
+            $imgs.attr('src', imgString);
+        }
 
-			$tile.attr('src', imgString);
-			
-			var timeout = setTimeout(function() {
-				var imgString = imgFolder + 'graysquare.png';
-				$tile.attr('src', imgString);
-			}, 500);
-		}
-			
-		// If 2 tiles are currently selected and hint is clicked before 
-		// the second tile finishes executing, do nothing.
+        // Fade in a message on the message board.
+        $msgboard.hide().delay(700).fadeTo(700,1).text("Start Matching!");
+	};
+    
+	// Give a hint.
+	function hint() {
+        // If no tiles are currently selected, do nothing.
+        
+        // If 1 tile is currently selected, find the other matching tile.
+        // if(activeOneID !== -1 && activeTwoID === -1) {
+        if(numUp === 1) {
+            var matchingID = matchArray[activeOneID];
+            
+            var $tile = $('img').eq(matchingID);
+            var imgString = imgFolder + 'hintsquare.png';
+
+            $tile.attr('src', imgString);
+            
+            var timeout = setTimeout(function() {
+                var imgString = imgFolder + 'graysquare.png';
+                $tile.attr('src', imgString);
+            }, 500);
+        }
+
+        // If 2 tiles are currently selected and hint is clicked before 
+        // the second tile finishes executing, do nothing.
 	};
 	
 	// After a mismatch, reset these.
@@ -224,7 +261,7 @@ var Game = new (function() {
 		}
 		
 		isWorking = true;
-					
+
 		var selectedTile = e.target;
 		var tileClass = selectedTile.getAttribute('class');
 		var tileIDString = selectedTile.getAttribute('id');
@@ -329,44 +366,6 @@ var Game = new (function() {
 		
 	} // end tileListener()
 	
-
-	// Create the grid of tiles.
-	function createGrid() {
-		var tileID, str;
-		var imgString = imgFolder + "graysquare.png"
-		
-		if(size === 16) {
-			$board = $('<div id="board-4x4" class="column1of2"></div>');
-		} else if(size === 36) {
-			$board = $('<div id="board-6x6" class="column1of2"></div>');
-		}
-		$boardcontainer.append($board);
-		
-		for(var i = 0; i < size; i++) {
-			tileID = '"tile' + i + '"';
-			if(size === 16) {
-				str = '<div class="img_4x4">';
-			} else {
-				str = '<div class="img_6x6">';
-			}
-			str += '<img id=' + tileID + ' class="tile inplay" src=' + imgString + ' ';
-			str += 'alt=' + tileID + '>';
-			str += '</div>';
-			
-			$board.append(str);	
-		}
-
-		$imgs = $('img');
-		$imgs.on('click', function(e) {
-			tileListener(e);
-		});
-		
-		// Fade in a message on the message board.
-		$msgboard.stop(true, true);
-		$msgboard.hide().delay(700).fadeTo(700,1).text("Start Matching!");
-			
-	};
-	
 	function loadGame() {	
 		// Array of image name strings for all of the tiles.
 		gridImages = shuffleTiles(size);
@@ -386,7 +385,7 @@ var Game = new (function() {
 
 	function runGame() {	
 		size = 0;
-					
+
 		$('.size').on('click', function(e) {
 			e.preventDefault();
 			var selectedBttn = e.target;
@@ -419,23 +418,26 @@ var Game = new (function() {
 			
 			var selectedBttn = e.target;
 			var buttonID = selectedBttn.getAttribute('id');
-			
-			switch(buttonID) {
-				case 'newGame':
-					newgame();
-					break;
-				case 'restartGame':
-					restart();
-					break;
-				case 'hint':
-					hint();
-					break;
-				case 'solve':
-					solve();
-					break;
-				default: 	// Do nothing
-					break;
-			}
+
+            // Prevent "Solved" message from appearing before a grid has been chosen.
+            if(gridCreated) {
+                switch(buttonID) {
+                    case 'newGame':
+                        newgame();
+                        break;
+                    case 'restartGame':
+                        restart();
+                        break;
+                    case 'hint':
+                        hint();
+                        break;
+                    case 'solve':
+                        solve();
+                        break;
+                    default: 	// Do nothing
+                        break;
+                }
+            }
 		});	
 		
 		
@@ -478,7 +480,6 @@ var Game = new (function() {
 				}
 			}
 		});		
-				
 	}
 
 	this.setUp = setUp;
@@ -545,7 +546,7 @@ function SizeChange() {
 	var $cmb = $('div#container-msgboard');
 	var $mbc = $('div#msgboard-center');
 	var $mb = $('p#msgboard');
-		
+
 	if($container_outer.width() < 590) {
 	
 		// Resize text in column 2 at an overall width of 590px:
@@ -632,7 +633,6 @@ function SizeChange() {
 			});
 		});		
 	}
-	
 }
 	
 	
