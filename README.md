@@ -1,6 +1,6 @@
 
 
-# Matching Game
+# Matching Game  <img align="bottom" src="https://github.com/lmitchell4/matching-game/blob/master/img/example_game.png" alt="Example game">
 
 This is a simple web-based matching game where the user clicks on tiles 
 with hidden images and tries to match up tiles with the same image.  
@@ -8,7 +8,7 @@ with hidden images and tries to match up tiles with the same image.
 
 # How to Play
 
-After cloning or downloading the program, just open the index.html file in 
+After cloning or downloading the program, just open the `index.html` file in 
 a browser. You will need to have JavaScript enabled to be able to play.
 
 Select a grid size, either 4 tiles by 4 tiles, or 6 tiles by 6 tiles
