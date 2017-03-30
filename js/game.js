@@ -53,13 +53,13 @@ $(function(){
       return keep;
     },
     
-    returnMatchArray: function(gridImages) {
+    returnMatchArray: function() {
       // Figure out where each tile's match is.
       ret = [];
       
-      for(var i = 0; i < gridImages.length; i++) {
-        for(var j = 0; j < gridImages.length; j++) {
-          if(gridImages[j] === gridImages[i] && i !== j) {
+      for(var i = 0; i < this.gridImages.length; i++) {
+        for(var j = 0; j < this.gridImages.length; j++) {
+          if(this.gridImages[j] === this.gridImages[i] && i !== j) {
             ret[i] = j;
           }
         }
@@ -79,13 +79,13 @@ $(function(){
     
     startNewTurn: function() {
       // After a mismatch, reset these.
-      activeOneID = -1;
-      activeOneImage = "";
+      this.activeOneID = -1;
+      this.activeOneImage = "";
 
-      activeTwoID = -1;			
-      activeTwoImage = "";
+      this.activeTwoID = -1;			
+      this.activeTwoImage = "";
       
-      numUp = 0;
+      this.numUp = 0;
     },
     
     init: function() {
@@ -93,9 +93,9 @@ $(function(){
       gridImages = this.shuffleTiles(size);
       matchArray = this.returnMatchArray(gridImages);
 
-      if(!localStorage.notes) {
-        localStorage.notes = JSON.stringify([]);
-      }
+      // if(!localStorage.notes) {
+        // localStorage.notes = JSON.stringify([]);
+      // }
     }
     // ,
     // add: function(obj) {
