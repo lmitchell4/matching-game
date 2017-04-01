@@ -5,24 +5,10 @@ $(function(){
     uniqTileNames: ['a','b','c','one','two','three','four','bunny','cat',
                     'circle','triangle','pentagon','hexagon',
                     'hash','percent','star1','star2','tree'],
-    flipSpeed: 1000,
     imgFolder: 'img/',
-    size: null,
+    size: 16,           // default to 16
     gridImages: [],			// Array holding the image name for each tile.
     matchArray: [],			// Indicates the index of each tile's match.
-    
-    activeOneID: -1,			// Controls active (face up) tiles.
-    activeOneImage: "",		// Controls active (face up) tiles.
-    activeTwoID: -1,			// Controls active (face up) tiles.
-    activeTwoImage: "",		// Controls active (face up) tiles.
-    numUp: 0,					// Number of active (face up) tiles.
-    numOfMatches: 0,			// Total number of matched tiles.
-    numOfClicks: 0,			// Number of successful tile clicks;
-                                    // 	used to trigger a new message.
-    gridCreated: false,
-    gameOver: false,
-    isWorking: false,			// Indicates if tileListener() method is executing. 
-
     imgFolder: 'img/',
     
     shuffleTiles: function(n) {
@@ -32,7 +18,7 @@ $(function(){
       
       // Randomly reorder the uniqTileNames array.
       // Reorder a copy of the array to leave the original intact.
-      var shuffledAll = uniqTileNames;
+      var shuffledAll = this.uniqTileNames;
       shuffledAll.sort(function () {
         return 0.5 - Math.random();
       });
@@ -90,7 +76,7 @@ $(function(){
     
     init: function() {
       // Array of image name strings for all of the tiles.
-      gridImages = this.shuffleTiles(size);
+      gridImages = this.shuffleTiles(this.size);
       matchArray = this.returnMatchArray(gridImages);
 
       // if(!localStorage.notes) {
@@ -110,6 +96,9 @@ $(function(){
   
   
   var controller = {
+    setSize: function(size) {
+      model.size = size;
+    },
     
     init: function() {
       model.init();
@@ -119,25 +108,56 @@ $(function(){
   };
   
   
-  
-  
   var view = {
+    init: function() {
+      this.flipSpeed = 1000;
+      this.$boardcontainer = $('#container-board');
+      this.$msgboard = $('p#msgboard');
+      this.$gridMenu = $('#menu-grid');
+      this.$board;
+      this.$imgs;
+      this.activeOneID = -1;			// Controls active (face up) tiles.
+      this.activeOneImage = "";	  // Controls active (face up) tiles.
+      this.activeTwoID = -1;			// Controls active (face up) tiles.
+      this.activeTwoImage = "";	  // Controls active (face up) tiles.
+      this.numUp = 0;					    // Number of active (face up) tiles.
+      this.numOfMatches = 0;			// Total number of matched tiles.
+      this.numOfClicks = 0;			  // Number of successful tile clicks; used to trigger a new message.
+      this.gridCreated = false;
+      this.gameOver = false;
+      this.isWorking = false;		  // Indicates if tileListener() method is executing. 
+    
+      $(".size").on("click", function(e) {
+        e.preventDefault();
+        var selectedBttn = e.target;
+        var buttonID = selectedBttn.getAttribute('id');
+        
+        if(buttonID === "4x4") {
+          controller.setSize(16);			
+        } else if(buttonID === "6x6") {
+          controller.setSize(36);
+        }
+        
+        this.$gridMenu.remove();
+        this.loadGame();
+      });      
+    },
     
     createGrid: function() {
       // Create the grid of tiles.
       var tileID, str;
-      var imgString = imgFolder + "graysquare.png"
+      var imgString = imgFolder + "graysquare.png";
       
-      if(size === 16) {
-        $board = $('<div id="board-4x4" class="column1of2"></div>');
-      } else if(size === 36) {
-        $board = $('<div id="board-6x6" class="column1of2"></div>');
+      if(controller.getSize() === 16) {
+        this.$board = $('<div id="board-4x4" class="column1of2"></div>');
+      } else if(controller.getSize() === 36) {
+        this.$board = $('<div id="board-6x6" class="column1of2"></div>');
       }
-      $boardcontainer.append($board);
+      this.$boardcontainer.append(this.$board);
       
-      for(var i = 0; i < size; i++) {
+      for(var i = 0; i < controller.getSize(); i++) {
         tileID = '"tile' + i + '"';
-        if(size === 16) {
+        if(controller.getSize() === 16) {
           str = '<div class="img_4x4">';
         } else {
           str = '<div class="img_6x6">';
@@ -146,104 +166,83 @@ $(function(){
         str += 'alt=' + tileID + '>';
         str += '</div>';
         
-        $board.append(str);	
+        this.$board.append(str);	
       }
 
-      $imgs = $('img');
-      $imgs.on('click', function(e) {
+      this.$imgs = $('img');
+      this.$imgs.on('click', function(e) {
         tileListener(e);
       });
       
       // Fade in a message on the message board.
-      $msgboard.stop(true, true);
-      $msgboard.hide().delay(700).fadeTo(700,1).text("Start Matching!");
-          
-          gridCreated = true;
+      this.$msgboard.stop(true, true);
+      this.$msgboard.hide().delay(700).fadeTo(700,1).text("Start Matching!");
+      this.gridCreated = true;
     },
     
     solve: function() {
       // Solve the current game.
-      gameOver = true;
+      this.gameOver = true;
       
       // Show all tiles.
-      for(var i = 0; i < size; i++) {
-          showOneTile(i);
+      for(var i = 0; i < controller.getSize(); i++) {
+        this.showOneTile(i);
       }
   
-      numOfMatches = 2*size;
+      this.numOfMatches = 2*controller.getSize();
       $('img:not(.matched)').addClass('matched');
       
       // If the message is still fading out after a match, this message can 
       // accidentally fade, too, so first stop any current animations, then 
       // undo the fade, then display the new message.
-      $msgboard.stop(true, true);
-      $msgboard.fadeTo(0,1).text('Solved!');
+      this.$msgboard.stop(true, true);
+      this.$msgboard.fadeTo(0,1).text('Solved!');
     },
     
     changeSpeed: function(speed) {
       // Change the time before mismatches get returned to gray.
       if(speed === "slow") {
-        flipSpeed = 2000;
+        this.flipSpeed = 2000;
       } else if(speed === "medium") {
-        flipSpeed = 1000;
+        this.flipSpeed = 1000;
       } else if(speed === "fast") {
-        flipSpeed = 200;
+        this.flipSpeed = 200;
       }
     },
     
     showOneTile: function(id) {
       // Show one tile at a time.
       var imgString = imgFolder + gridImages[id] + '.png';
-      $imgs.eq(id).attr('src', imgString);
-      // $('img#tile' + id).attr('src', imgFolder + gridImages[id] + '.png');
+      this.$imgs.eq(id).attr('src', imgString);
     },
-    
-    runGame: function() {	
-      size = 0;
 
-      $('.size').on('click', function(e) {
-        e.preventDefault();
-        var selectedBttn = e.target;
-        var buttonID = selectedBttn.getAttribute('id');
-        
-        if(buttonID === "4x4") {
-          size = 16;			
-        } else if(buttonID === "6x6") {
-          size = 36;
-        }
-        
-        $gridMenu.remove();				
-        loadGame();
-      });
-    },
-    
     newgame: function() {
       // Clear the message board.
-      $msgboard.stop(true, true);
-      $msgboard.hide().text("");
+      this.$msgboard.stop(true, true);
+      this.$msgboard.hide().text("");
 
       // If a game already exists, run the code.
       // Otherwise, do nothing. Wait for the user to finally pick a grid size.
-      if($board) {		
+      if(this.$board) {		
         // Reset variables.
         reset_vars();
 
         // Remove the current board.
-        $board.remove();
+        this.$board.remove();
         
         // Kill the board selector.
         // This will ensure this function does nothing if it is run multiple 
         // times in a row.
-        $board = undefined;
+        this.$board = undefined;
         
         // Show the grid selection menu.
-        $boardcontainer.append($gridMenu);
+        this.$boardcontainer.append(this.$gridMenu);
 
         // Resize the grid menu, if necessary.
         SizeChange();
         
         // Generate the new game.
-        runGame();
+        this.runGame();
       }
     },
 
@@ -251,23 +250,23 @@ $(function(){
       // Restart the current game.
 
       // Clear the message board.
-      $msgboard.stop(true, true);
-      $msgboard.hide().text("");
+      this.$msgboard.stop(true, true);
+      this.$msgboard.hide().text("");
       
       // Reset variables.
       reset_vars();
       
-      if($imgs) {
-        $imgs.removeClass('matched');	// remove the 'matched' class from any/all tiles
-        $imgs.attr('inplay');			// reset tile class to 'inplay'
+      if(this.$imgs) {
+        this.$imgs.removeClass('matched');	// remove the 'matched' class from any/all tiles
+        this.$imgs.attr('inplay');			// reset tile class to 'inplay'
         
         // Change all tiles back to gray without reshuffling.
         var imgString = imgFolder + 'graysquare.png';
-        $imgs.attr('src', imgString);
+        this.$imgs.attr('src', imgString);
       }
 
       // Fade in a message on the message board.
-      $msgboard.hide().delay(700).fadeTo(700,1).text("Start Matching!");
+      this.$msgboard.hide().delay(700).fadeTo(700,1).text("Start Matching!");
     },
     
     hint: function() {
@@ -277,7 +276,7 @@ $(function(){
       // If 1 tile is currently selected, find the other matching tile.
       // if(activeOneID !== -1 && activeTwoID === -1) {
       if(numUp === 1) {
-        var matchingID = matchArray[activeOneID];
+        var matchingID = matchArray[this.activeOneID];
         
         var $tile = $('img').eq(matchingID);
         var imgString = imgFolder + 'hintsquare.png';
@@ -296,13 +295,11 @@ $(function(){
     
     startNewTurn: function() {
       // After a mismatch, reset these.
-      activeOneID = -1;
-      activeOneImage = "";
-
-      activeTwoID = -1;			
-      activeTwoImage = "";
-      
-      numUp = 0;
+      this.activeOneID = -1;
+      this.activeOneImage = "";
+      this.activeTwoID = -1;			
+      this.activeTwoImage = "";
+      this.numUp = 0;
     },
     
     tileListener: function(e) {
@@ -311,11 +308,11 @@ $(function(){
       // The method ignores new tile clicks until the first method call is finished.
     
       // Ignore new clicks until the first click is finished.
-      if(isWorking || gameOver) {
+      if(this.isWorking || gameOver) {
         return;
       }
       
-      isWorking = true;
+      this.isWorking = true;
 
       var selectedTile = e.target;
       var tileClass = selectedTile.getAttribute('class');
@@ -325,45 +322,45 @@ $(function(){
     
       // If a matched tile is clicked, ignore the event.
       if(tileClass.indexOf("matched") != -1)  {	// tiles also have class 'tile'
-        isWorking = false;
+        this.isWorking = false;
         return;
       }
       
       if(numUp === 0) {
         // Show the tile.
-        activeOneID = id;
-        activeOneImage = image;
-        showOneTile(id);
-        numUp = 1;
+        this.activeOneID = id;
+        this.activeOneImage = image;
+        this.showOneTile(id);
+        this.numUp = 1;
 
-        isWorking=false;
-        numOfClicks += 1;
+        this.isWorking=false;
+        this.numOfClicks += 1;
         
-      } else if(numUp === 1) {
+      } else if(this.numUp === 1) {
         // Show the tile.
-        activeTwoID = id;
-        activeTwoImage = image;
-        showOneTile(id);
+        this.activeTwoID = id;
+        this.activeTwoImage = image;
+        this.showOneTile(id);
     
         // If an active tile is reclicked, ignore the reclick.
-        if(activeTwoID === activeOneID) {
-          isWorking = false;
+        if(this.activeTwoID === this.activeOneID) {
+          this.isWorking = false;
           return;
         }
     
         // Two tiles successfully matched. 
         // Keep both tiles face up and update their classes.
         // Increase numOfMatches.
-        if(activeOneImage === activeTwoImage) {
-          $('img#tile' + activeOneID).addClass('matched');	//attr('class','matched');		
-          $('img#tile' + activeTwoID).addClass('matched');	//attr('class','matched');					
-          numOfMatches += 2;
-          if(numOfMatches === size) {
-            gameOver = true;
+        if(this.activeOneImage === this.activeTwoImage) {
+          $('img#tile' + this.activeOneID).addClass('matched');	//attr('class','matched');		
+          $('img#tile' + this.activeTwoID).addClass('matched');	//attr('class','matched');					
+          this.numOfMatches += 2;
+          if(this.numOfMatches === controller.getSize()) {
+            this.gameOver = true;
             
             // Update the message board when the user wins.
-            $msgboard.stop(true, true);
-            $msgboard.fadeTo(0,1).text("Well Done!");
+            this.$msgboard.stop(true, true);
+            this.$msgboard.fadeTo(0,1).text("Well Done!");
     
             return;
           }
@@ -372,12 +369,12 @@ $(function(){
           //  for it to finish.
           // fade to 1 because other parts of the code may have faded to 0
           //  before this runs.					
-          $msgboard.stop(true, true);
-          $msgboard.fadeTo(0,1).text('Match!').delay(2000).fadeTo(1000,0);				
+          this.$msgboard.stop(true, true);
+          this.$msgboard.fadeTo(0,1).text('Match!').delay(2000).fadeTo(1000,0);				
           
           // Begin a new turn.
-          startNewTurn();
-          isWorking = false;
+          this.startNewTurn();
+          this.isWorking = false;
           
         } else {			
           var tileListenerThis = this;
@@ -392,9 +389,7 @@ $(function(){
             
             // Begin a new turn.
             startNewTurn();
-            isWorking = false;
-            //tileListenerThis.startNewTurn();
-            //tileListenerThis.isWorking = false;
+            this.isWorking = false;
           }, flipSpeed);
           
         }
@@ -404,38 +399,33 @@ $(function(){
     
       // Clear the message board on the 9th successful click.
       if(numOfClicks === 9) {
-        $msgboard.stop(true, true);
-        $msgboard.fadeTo(700,0);		// second argument is opacity
+        this.$msgboard.stop(true, true);
+        this.$msgboard.fadeTo(700,0);		// second argument is opacity
       }
 
       // Show a new message on the 19th successful click.
       if(numOfClicks === 19) {
-        $msgboard.stop(true, true);
-        $msgboard.hide().delay(700).fadeTo(700,1).text("Keep Going!");			
+        this.$msgboard.stop(true, true);
+        this.$msgboard.hide().delay(700).fadeTo(700,1).text("Keep Going!");			
       }
       
       // Remove the "Keep Going!" message on the 22nd successful click.
       if(numOfClicks === 27) {
-        $msgboard.fadeTo(700,0);
+        this.$msgboard.fadeTo(700,0);
       }
       
     }, // end tileListener()
     
     loadGame: function() {	
       // Array of image name strings for all of the tiles.
-      gridImages = shuffleTiles(size);
+      this.gridImages = this.shuffleTiles(size);
       
       // matchArray[i] gives the index of the other tile that has the 
       // same image as tile i.
-      matchArray = returnMatchArray(gridImages);
-
-      // Number of milliseconds to wait before mismatched tiles are reset to gray.
-  //		flipSpeed = 1000;		// medium
-  //		$('input.speed').removeClass('selected');	// remove selected class from any/all
-  //		$('input#medium').addClass('selected');		// add selected class to medium button
+      this.matchArray = this.returnMatchArray(gridImages);
     
       // Create board.
-      createGrid();
+      this.createGrid();
     },
     
     setUp: function() {
@@ -455,19 +445,19 @@ $(function(){
         var buttonID = selectedBttn.getAttribute('id');
 
         // Prevent "Solved" message from appearing before a grid has been chosen.
-        if(gridCreated) {
+        if(this.gridCreated) {
           switch(buttonID) {
             case 'newGame':
-              newgame();
+              this.newgame();
               break;
             case 'restartGame':
-              restart();
+              this.restart();
               break;
             case 'hint':
-              hint();
+              this.hint();
               break;
             case 'solve':
-              solve();
+              this.solve();
               break;
             default: 	// Do nothing
               break;
@@ -928,7 +918,7 @@ $(function(){
           size = 36;
         }
         
-        $gridMenu.remove();				
+        $gridMenu.remove();
         loadGame();
       });
     }
