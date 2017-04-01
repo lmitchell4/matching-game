@@ -517,7 +517,7 @@ $(function(){
     }  
   };
   
-  octopus.init();
+  controller.init();
 
 });  
   
